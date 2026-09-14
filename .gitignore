@@ -1,0 +1,14 @@
+node_modules/
+.next/
+coverage/
+playwright-report/
+test-results/
+.playwright-mcp/
+medilink-*.png
+doc-find-brand-*.png
+.env
+.env.local
+var/uploads/
+*.log
+*.tsbuildinfo
+.DS_Store
