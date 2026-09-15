@@ -35,7 +35,7 @@ body {
   margin: 0;
   color: var(--ml-text);
   background: var(--ml-canvas);
-  font-family: "SF Pro Text", "SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: var(--font-figtree), "Avenir Next", "Segoe UI", sans-serif;
   font-synthesis: none;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -126,7 +126,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .page-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; margin-bottom: 30px; }
 .eyebrow { color: var(--ml-primary); text-transform: uppercase; font-size: 11px; font-weight: 700; letter-spacing: .13em; margin: 0 0 8px; }
 h1, h2, h3, p { margin-top: 0; }
-h1, h2 { font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-weight: 700; }
+h1, h2 { font-family: var(--font-figtree), "Avenir Next", "Segoe UI", sans-serif; font-weight: 700; }
 h1 { margin-bottom: 8px; color: var(--ml-text); font-size: clamp(32px, 3vw, 40px); line-height: 1.2; letter-spacing: -.022em; }
 h2 { margin-bottom: 16px; color: var(--ml-text); font-size: 24px; line-height: 1.33; letter-spacing: -.015em; }
 h3 { margin-bottom: 6px; font-size: 16px; line-height: 1.5; color: var(--ml-text); }
@@ -579,7 +579,7 @@ h3 { margin-bottom: 6px; font-size: 16px; line-height: 1.5; color: var(--ml-text
   --ml-shell-accent: #00d2d2;
   color: var(--ml-text);
   background: var(--ml-canvas);
-  font-family: "Avenir Next", "Segoe UI Variable", "Segoe UI", system-ui, sans-serif;
+  font-family: var(--font-figtree), "Avenir Next", "Segoe UI", sans-serif;
 }
 
 [data-ui="sapphire-workspace"].df-shell { grid-template-columns: 240px minmax(0,1fr); }
@@ -785,8 +785,12 @@ h3 { margin-bottom: 6px; font-size: 16px; line-height: 1.5; color: var(--ml-text
 .df-mobile-context > div { min-width: 0; display: grid; gap: 2px; }
 .df-mobile-context strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; }
 .df-mobile-context span:last-child { color: #c5c9de; font-size: 12px; }
+.df-mobile-identity { margin-bottom: 15px; padding: 12px; border: 1px solid rgba(255,255,255,.13); border-radius: 8px; background: rgba(0,0,0,.12); display: grid; gap: 8px; }
+.df-mobile-identity > span { color: #dce0ef; display: flex; align-items: center; gap: 7px; font-size: 11px; font-weight: 700; letter-spacing: .025em; }
+.df-mobile-identity select { width: 100%; min-height: 46px; padding: 0 36px 0 11px; border: 1px solid rgba(255,255,255,.2); border-radius: 6px; background: #343b5f; color: #fff; font: inherit; font-size: 13px; }
+.df-mobile-identity select:focus-visible { outline: 3px solid #a8d8ff; outline-offset: 2px; }
 .df-mobile-menu .df-nav-search { margin-inline: 0; }
-.df-mobile-menu-links { max-height: calc(100vh - 215px); overflow-y: auto; }
+.df-mobile-menu-links { max-height: calc(100vh - 315px); overflow-y: auto; }
 .df-mobile-menu-links .df-nav-section { margin-bottom: 18px; }
 .df-mobile-menu-links .df-nav-label { display: block; margin: 0 10px 6px; color: #969cb9; font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
 .df-mobile-menu-links nav { display: grid; gap: 4px; }

@@ -49,7 +49,7 @@ const navigation: Record<DemoRole, Array<{ label: string; icon: typeof Home }>> 
 }
 
 const titles: Record<DemoRole, { eyebrow: string; title: string; lede: string }> = {
-  doctor: { eyebrow: "Doctor workspace", title: "Good afternoon, Anika", lede: "Your next useful action is ready. Review the terms without losing sight of what remains before work can start." },
+  doctor: { eyebrow: "Doctor workspace", title: "Today", lede: "Review your next action and upcoming work." },
   manager: { eyebrow: "Clinic workspace", title: "Staffing, clearly organised", lede: "One live requirement, one candidate record, and one accountable path from interest to a ready session." },
   approver: { eyebrow: "Clinical review", title: "Decisions with a clear scope", lede: "Review the evidence relevant to this doctor, site, service and period. Approval does not transfer elsewhere." },
   finance: { eyebrow: "Finance workspace", title: "Reconcile agreed work", lede: "Commercial terms, completion and payment records stay distinct, so the responsible payer always sees the real state." },

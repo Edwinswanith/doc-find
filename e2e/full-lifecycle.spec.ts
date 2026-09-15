@@ -45,7 +45,7 @@ test("clinic publishes a vacancy, doctor applies, clinic sends terms and doctor 
   await page.goto(`/offers/${offer.id}`)
   await expect(page.getByText("Reviewing this page does not accept the offer.")).toBeVisible()
   await page.getByRole("button", { name: "Accept displayed version" }).click()
-  await expect(page.getByText("Accepted", { exact: true })).toBeVisible()
+  await expect(page.locator(".df-status.success", { hasText: "Accepted" })).toBeVisible()
   await expect(page.getByText("Evidence needed", { exact: true })).toBeVisible()
 })
 
@@ -72,4 +72,19 @@ test("mobile workspace menu exposes every authorised hiring destination", async 
   await page.getByRole("dialog").getByRole("link", { name: "Offers" }).click()
   await expect(page).toHaveURL(/hiring\/offers/)
   await expect(page.getByRole("heading", { name: "Offers" })).toBeVisible()
+})
+
+test("mobile workspace menu switches between seeded users and role workspaces", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "mobile-chrome", "Mobile navigation behaviour")
+  await reset(page)
+  await page.goto("/clinic/org-harley/today")
+  await page.getByRole("button", { name: "Open workspace menu" }).click()
+  const menu = page.getByRole("dialog")
+  await menu.getByLabel("Switch demo user").selectOption("doctor-anika")
+  await expect(page).toHaveURL(/\/doctor\/today/)
+  await expect(page.getByText("Doctor workspace", { exact: true })).toBeVisible()
+  await page.getByRole("button", { name: "Open workspace menu" }).click()
+  await page.getByRole("dialog").getByLabel("Switch demo user").selectOption("manager-sarah")
+  await expect(page).toHaveURL(/\/clinic\/org-harley\/today/)
+  await expect(page.getByText("Clinic workspace", { exact: true })).toBeVisible()
 })
