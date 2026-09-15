@@ -1,9 +1,12 @@
 import { createHmac, timingSafeEqual } from "node:crypto"
-import { demoUsers } from "@/lib/demo-data"
+import { createWorkspaceFixture } from "@/lib/workspace/fixture"
 
-const COOKIE_NAME = "medilink_prototype_session"
+const COOKIE_NAME = "doc_find_prototype_session"
+
+const demoUsers = createWorkspaceFixture().users
 
 function secret() {
+  if (process.env.NODE_ENV === "production" && !process.env.PROTOTYPE_COOKIE_SECRET) throw new Error("PROTOTYPE_COOKIE_SECRET is required in production.")
   return process.env.PROTOTYPE_COOKIE_SECRET || "local-prototype-only-change-before-sharing"
 }
 

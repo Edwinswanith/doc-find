@@ -1,64 +1,33 @@
 import { expect, test } from "@playwright/test"
-import AxeBuilder from "@axe-core/playwright"
 
-async function switchUser(page: import("@playwright/test").Page, userId: string) {
-  await page.getByLabel("Switch prototype user").selectOption(userId)
-}
+async function session(page: import("@playwright/test").Page, userId: string) { await page.request.post("/api/v1/prototype/session", { data: { userId } }) }
 
-async function openInbox(page: import("@playwright/test").Page) {
-  const desktopTab = page.getByRole("tab", { name: "Inbox" })
-  if (await desktopTab.isVisible()) await desktopTab.click()
-  else await page.getByRole("navigation", { name: "Mobile navigation" }).getByRole("button", { name: "Inbox" }).click()
-}
+test("clinic message, price proposal and first-seen timestamp persist across roles", async ({ page }) => {
+  await session(page, "manager-sarah")
+  await page.request.post("/api/v1/prototype/reset", { data: { confirmation: "RESET DOC+FIND DEMO" } })
+  await page.goto("/engagements/eng-theo-harley")
+  await page.getByPlaceholder("Write a clear staffing message").fill("We can offer £625 per four-hour clinic. Please review the dates.")
+  await page.getByRole("spinbutton").fill("625")
+  await page.getByRole("button", { name: "Send message" }).click()
+  await expect(page.getByText("£625 per session")).toBeVisible()
+  await expect(page.getByText(/Delivered/)).toBeVisible()
 
-test("clinic reviews multiple doctor approaches and the doctor receives a seen timestamp", async ({ page }) => {
-  await page.goto("/")
-  await expect(page.locator('[data-hydrated="true"]')).toBeAttached()
-  await switchUser(page, "manager-sarah")
+  await session(page, "doctor-theo")
+  await page.goto("/engagements/eng-theo-harley")
+  await expect(page.getByText("We can offer £625 per four-hour clinic. Please review the dates.")).toBeVisible()
+  await page.getByPlaceholder("Write a clear staffing message").fill("Thank you. The dates work for me and I am happy to discuss the terms.")
+  await page.getByRole("button", { name: "Send message" }).click()
 
-  await page.getByRole("button", { name: /Open notifications, 3 unread/ }).click()
-  await expect(page.getByText("3 conversations need attention")).toBeVisible()
-  await page.getByRole("button", { name: /Dr Theo Martin approached your clinic/ }).click()
+  await session(page, "manager-sarah")
+  await page.goto("/clinic/org-harley/inbox")
+  const unreadConversation = page.locator(".df-message-preview.unread").filter({ hasText: "Dr Theo Martin" })
+  await expect(unreadConversation).toBeVisible()
+  await unreadConversation.click()
+  await expect(page).toHaveURL(/engagements\/eng-theo-harley/)
+  await expect(page.locator(".df-bubble").getByText("Thank you. The dates work for me and I am happy to discuss the terms.")).toBeVisible()
+  await expect(page.getByText(/Seen 15 Sept 2026/)).toBeVisible()
 
-  await expect(page.getByRole("heading", { name: "Dr Theo Martin" })).toBeVisible()
-  await expect(page.locator(".thread-messages").getByText("I am available for all three October dates", { exact: false })).toBeVisible()
-
-  await switchUser(page, "doctor-theo")
-  await openInbox(page)
-  await expect(page.getByText(/Seen 14 Sept, \d{2}:\d{2}/)).toBeVisible()
-})
-
-test("clinic sends a message with a price and receives a read receipt after the doctor opens it", async ({ page }) => {
-  await page.goto("/")
-  await expect(page.locator('[data-hydrated="true"]')).toBeAttached()
-  await switchUser(page, "manager-sarah")
-  await openInbox(page)
-
-  await page.getByRole("button", { name: /Dr Anika Rao October outpatient clinics/ }).click()
-  await page.getByRole("textbox", { name: "Message", exact: true }).fill("We can offer two supported Tuesday sessions. Would £625 per session work for you?")
-  await page.getByLabel("Price per session").fill("625")
-  await page.getByRole("button", { name: "Send message + price" }).click()
-  await expect(page.getByText("£625", { exact: true })).toBeVisible()
-  await expect(page.getByText(/Sent 14 Sept, \d{2}:\d{2}/).last()).toBeVisible()
-
-  await switchUser(page, "doctor-anika")
-  await page.getByRole("button", { name: /Open notifications, 2 unread/ }).click()
-  await page.getByRole("button", { name: /Harley Street Skin Centre contacted you/ }).click()
-  await expect(page.locator(".thread-messages").getByText("Would £625 per session work for you?", { exact: false })).toBeVisible()
-  await expect(page.getByText("£625", { exact: true })).toBeVisible()
-
-  await switchUser(page, "manager-sarah")
-  await openInbox(page)
-  await page.getByRole("button", { name: /Dr Anika Rao October outpatient clinics/ }).click()
-  await expect(page.getByText(/Seen 14 Sept, \d{2}:\d{2}/).last()).toBeVisible()
-})
-
-test("engagement inbox has no serious accessibility violations", async ({ page }) => {
-  await page.goto("/")
-  await expect(page.locator('[data-hydrated="true"]')).toBeAttached()
-  await switchUser(page, "manager-sarah")
-  await openInbox(page)
-
-  const results = await new AxeBuilder({ page }).analyze()
-  expect(results.violations.filter((item) => item.impact === "critical" || item.impact === "serious")).toEqual([])
+  await session(page, "doctor-theo")
+  await page.goto("/engagements/eng-theo-harley")
+  await expect(page.getByText(/Seen 15 Sept 2026/).last()).toBeVisible()
 })

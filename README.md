@@ -7,7 +7,8 @@ High-fidelity, mobile-first workflow prototype for fictional dermatology outpati
 - Nine seeded identities across doctor, clinic manager, clinical approver, finance and operations workspaces.
 - Vacancy discovery/application and direct-invitation entry routes converging on one engagement.
 - Structured offer, acceptance, approval, readiness, booking, completion and payment-record states.
-- Two-way engagement messaging, proposed session prices, precise seen timestamps and scrollable multi-request notifications.
+- Route-aware Sapphire Workspace navigation, URL-backed candidate context and focused role-specific Today pages.
+- Persistent two-way engagement messaging, proposed session prices, precise seen timestamps and multi-request notifications.
 - Controlled phone visibility, evidence states, notifications and audit-oriented timelines.
 - Responsive Sapphire Blue interface with mobile bottom navigation, keyboard focus and reduced-motion support.
 - Local MongoDB seed, replica-set configuration and a server-authorised command endpoint with version/idempotency checks.
@@ -22,7 +23,7 @@ cp .env.example .env.local
 pnpm dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000). Without `MONGODB_URI`, consequential actions use an explicitly prototype-only process-memory command store. Use the dark prototype bar to switch roles and reset the walkthrough.
+Open [http://localhost:3000](http://localhost:3000). Without `MONGODB_URI`, local development uses an explicitly labelled process-memory demonstration store. Configure Atlas to persist separate sessions. Use the dark sidebar's **Prototype only** area to switch roles and reset the walkthrough.
 
 ## Run MongoDB and seed the workflows
 
@@ -33,7 +34,18 @@ docker compose up -d
 pnpm seed
 ```
 
-The MongoDB service runs as a single-node replica set because consequential workflow commands use transactions. `pnpm reset:demo` clears only the named Doc+Find prototype collections in the configured `medilink` database and reseeds fictional records.
+MongoDB must support transactions for consequential workflow commands. Set `MONGODB_DB=doc_find_demo`; the application and seed command refuse any other demo database. `pnpm reset:demo` restores the known fictional Sapphire V1 state.
+
+Recommended `.env.local` values:
+
+```bash
+MONGODB_URI=mongodb+srv://least-privileged-demo-user:REDACTED@your-cluster/
+MONGODB_DB=doc_find_demo
+PROTOTYPE_COOKIE_SECRET=replace-with-a-long-random-local-secret
+DEMO_MODE=true
+```
+
+Rotate any credential that has appeared outside your secret manager. Never commit `.env.local`.
 
 When `MONGODB_URI` is configured, database failures are reported rather than silently falling back to process memory.
 
@@ -54,9 +66,9 @@ Playwright browsers may need to be installed once with `pnpm exec playwright ins
 
 Use the prototype user switcher to test the complete seeded conversations:
 
-1. Select **Sarah Whitmore**, open notifications and choose one of the three doctor approaches. Opening the message marks it seen.
-2. Switch to that doctor, open **Inbox**, and inspect the exact seen date and time beneath the sent message.
-3. As Sarah, open the Dr Anika Rao conversation, write one message, optionally add a per-session price and send it.
+1. Select **Sarah Whitmore**, open **Candidates**, and choose one of the three doctor applications.
+2. Open **Conversation**. The doctor's message is marked seen and the doctor sees the exact timestamp.
+3. As Sarah, write one message, optionally add a per-session price and send it.
 4. Switch to **Dr Anika Rao**. Her notifications contain approaches from both Harley Street Skin Centre and Riverside Dermatology.
 5. Open the Harley Street conversation. Switching back to Sarah shows the new message's seen timestamp.
 

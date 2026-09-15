@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server"
 import { z } from "zod"
 import { COOKIE_NAME, createPrototypeCookie } from "@/lib/prototype-session"
-import { demoUsers } from "@/lib/demo-data"
+import { createWorkspaceFixture } from "@/lib/workspace/fixture"
+
+const demoUsers = createWorkspaceFixture().users
 
 const schema = z.object({ userId: z.string().min(1) })
 
