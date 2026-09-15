@@ -1,0 +1,9 @@
+e2e/
+playwright-report/
+test-results/
+coverage/
+.playwright-mcp/
+docker-compose.yml
+vitest.config.ts
+vitest.setup.ts
+playwright.config.ts

@@ -8,6 +8,7 @@ medilink-*.png
 doc-find-brand-*.png
 .env
 .env.local
+.vercel/
 var/uploads/
 *.log
 *.tsbuildinfo
