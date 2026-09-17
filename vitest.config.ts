@@ -11,5 +11,5 @@ export default defineConfig({
       include: ["src/lib/domain/**/*.ts", "src/lib/messaging.ts"],
     },
   },
-  resolve: { alias: { "@": new URL("./src", import.meta.url).pathname } },
+  resolve: { alias: { "@": new URL("./src", import.meta.url).pathname, "server-only": new URL("./src/test/server-only-shim.ts", import.meta.url).pathname } },
 })

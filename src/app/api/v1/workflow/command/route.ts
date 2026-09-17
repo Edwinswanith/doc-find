@@ -6,7 +6,7 @@ import { executeWorkspaceCommand } from "@/lib/workspace/service"
 import { WorkspaceDomainError } from "@/lib/workspace/domain"
 
 const schema = z.object({
-  command: z.enum(["publish", "apply", "invite", "shortlist", "start-discussion", "send-offer", "accept-offer", "decline-offer", "approve-scope", "mark-complete", "submit-invoice", "confirm-payment"]),
+  command: z.enum(["publish", "apply", "invite", "shortlist", "start-discussion", "send-offer", "accept-offer", "decline-offer", "approve-scope", "confirm-readiness", "mark-complete", "confirm-attendance", "submit-invoice", "confirm-payment"]),
   recordId: z.string().min(1),
   payload: z.record(z.string(), z.unknown()).optional(),
 })
@@ -14,7 +14,7 @@ const schema = z.object({
 const fail = (code: string, message: string, status: number, currentVersion?: number) => NextResponse.json({ success: false, error: { code, message, currentVersion } }, { status })
 
 export async function POST(request: Request) {
-  const actor = verifyPrototypeCookie((await cookies()).get(COOKIE_NAME)?.value)
+  const actor = await verifyPrototypeCookie((await cookies()).get(COOKIE_NAME)?.value)
   if (!actor) return fail("UNAUTHENTICATED", "Choose a seeded prototype user.", 401)
   const idempotencyKey = request.headers.get("Idempotency-Key")
   const expectedVersion = Number(request.headers.get("Expected-Version"))

@@ -1,4 +1,10 @@
-export type WorkspaceRole = "doctor" | "manager" | "approver" | "finance" | "operations"
+export type WorkspaceRole = "pending" | "doctor" | "manager" | "approver" | "finance" | "operations"
+
+// Accounts created through self-service sign-up start "created", move to "onboarding" once a role
+// is chosen, and reach "active" only after the role-specific onboarding wizard is completed. Demo
+// fixture users omit this field entirely, which is treated as "active" everywhere it's read -- see
+// defaultRouteForUser in prototype-session.ts.
+export type AccountStatus = "created" | "onboarding" | "active"
 
 export type WorkspaceUser = {
   id: string
@@ -8,9 +14,35 @@ export type WorkspaceUser = {
   initials: string
   organisationId?: string
   siteIds: string[]
+  email?: string
+  accountStatus?: AccountStatus
+  createdAt?: string
+  jobTitle?: string
+  phone?: string
 }
 
-export type Organisation = { id: string; name: string; legalName: string; status: "approved" | "pending"; version: number }
+// Never store or transmit a raw password -- only this record, which holds a scrypt hash and its
+// salt (see lib/password.ts). Kept in its own array rather than on WorkspaceUser so credential
+// material stays out of any payload that already serialises the user list to the client.
+export type Credential = { userId: string; email: string; passwordHash: string; salt: string; createdAt: string }
+
+export type Organisation = {
+  id: string
+  name: string
+  legalName: string
+  status: "approved" | "pending"
+  version: number
+  type?: string
+  website?: string
+  phone?: string
+  email?: string
+  address?: string
+  city?: string
+  postcode?: string
+  commonSpecialties?: string[]
+  staffingNotes?: string
+  preferredContactMethod?: string
+}
 export type Site = { id: string; organisationId: string; name: string; area: string; scope: string[]; version: number }
 
 export type AvailabilityState = "confirmed" | "partial" | "unknown" | "unavailable"
@@ -31,6 +63,16 @@ export type DoctorProfile = {
   discoverable: boolean
   contactPreference: "messages_first" | "request_call" | "professional_phone"
   version: number
+  phone?: string
+  photoUrl?: string
+  grade?: string
+  registrationNumber?: string
+  currentOrganisation?: string
+  bio?: string
+  availabilityPattern?: string
+  preferredLocations?: string[]
+  preferredShiftTypes?: string[]
+  minimumRateMinor?: number
 }
 
 export type RequirementStatus = "draft" | "published" | "paused" | "closed" | "cancelled"
@@ -49,6 +91,8 @@ export type Requirement = {
   status: RequirementStatus
   ownerId: string
   deadline: string
+  createdAt: string
+  urgent: boolean
   version: number
 }
 
@@ -64,6 +108,7 @@ export type SessionOccurrence = {
   reserved: number
   state: OccurrenceState
   requiredChecks: string[]
+  doctorConfirmedAt?: string
   version: number
 }
 
@@ -110,6 +155,10 @@ export type EvidenceRecord = {
   validUntil: string
   checkedAt?: string
   version: number
+  fileName?: string
+  fileType?: string
+  fileDataUrl?: string
+  submittedAt?: string
 }
 
 export type ApprovalRecord = {
@@ -191,6 +240,7 @@ export type AuditEvent = { id: string; actorId: string; action: string; recordId
 export type WorkspaceState = {
   version: number
   users: WorkspaceUser[]
+  credentials: Credential[]
   organisations: Organisation[]
   sites: Site[]
   doctors: DoctorProfile[]

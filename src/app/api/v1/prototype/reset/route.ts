@@ -5,7 +5,7 @@ import { resetWorkspaceState } from "@/lib/workspace/store"
 import { z } from "zod"
 
 export async function POST(request: Request) {
-  const actor = verifyPrototypeCookie((await cookies()).get(COOKIE_NAME)?.value)
+  const actor = await verifyPrototypeCookie((await cookies()).get(COOKIE_NAME)?.value)
   if (!actor) return NextResponse.json({ success: false, error: { code: "UNAUTHENTICATED", message: "Choose a demo identity first." } }, { status: 401 })
   const parsed = z.object({ confirmation: z.literal("RESET DOC+FIND DEMO") }).safeParse(await request.json().catch(() => null))
   if (!parsed.success) return NextResponse.json({ success: false, error: { code: "CONFIRMATION_REQUIRED", message: "Confirm the named fictional demo reset." } }, { status: 400 })

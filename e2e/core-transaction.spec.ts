@@ -7,7 +7,8 @@ async function session(page: import("@playwright/test").Page, userId: string) {
 
 async function reset(page: import("@playwright/test").Page) {
   await session(page, "manager-sarah")
-  await page.request.post("/api/v1/prototype/reset", { data: { confirmation: "RESET DOC+FIND DEMO" } })
+  const response = await page.request.post("/api/v1/prototype/reset", { data: { confirmation: "RESET DOC+FIND DEMO" } })
+  if (!response.ok()) throw new Error(`Demo reset failed (${response.status()}): ${await response.text()}`)
 }
 
 test("offer review is read-only and explicit acceptance remains distinct from readiness", async ({ page }) => {
@@ -21,7 +22,7 @@ test("offer review is read-only and explicit acceptance remains distinct from re
   await page.getByRole("button", { name: "Accept displayed version" }).click()
   await expect(page.locator(".df-status.success", { hasText: "Accepted" })).toBeVisible()
   await expect(page.getByText("Approval required", { exact: true })).toBeVisible()
-  await expect(page.getByText("Site induction is outstanding.")).toBeVisible()
+  await expect(page.getByText("Clinical approval is required for this site and scope.")).toBeVisible()
 })
 
 test("doctor Today has no serious accessibility violations", async ({ page }) => {

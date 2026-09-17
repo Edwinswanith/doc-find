@@ -4,7 +4,7 @@ import { COOKIE_NAME, verifyPrototypeCookie } from "@/lib/prototype-session"
 import { markConversationSeen } from "@/lib/workspace/service"
 
 export async function POST(_: Request, context: { params: Promise<{ id: string }> }) {
-  const actor = verifyPrototypeCookie((await cookies()).get(COOKIE_NAME)?.value)
+  const actor = await verifyPrototypeCookie((await cookies()).get(COOKIE_NAME)?.value)
   if (!actor) return NextResponse.json({ success: false, error: { code: "UNAUTHENTICATED", message: "Choose a demo identity." } }, { status: 401 })
   try { return NextResponse.json({ success: true, data: await markConversationSeen(actor.id, (await context.params).id) }) }
   catch { return NextResponse.json({ success: false, error: { code: "FORBIDDEN", message: "This conversation is not available." } }, { status: 403 }) }

@@ -8,14 +8,14 @@ describe("workspace record-level policy", () => {
   it("rejects a clinic manager route for another organisation", () => {
     const manager = state.users.find((item) => item.id === "manager-sarah")!
     expect(canOpenWorkspaceView(manager, "clinic-today", "org-harley")).toBe(true)
-    expect(canOpenWorkspaceView(manager, "clinic-today", "org-riverside")).toBe(false)
+    expect(canOpenWorkspaceView(manager, "clinic-today", "org-other")).toBe(false)
   })
 
   it("returns only participant conversations and messages", () => {
-    const doctor = state.users.find((item) => item.id === "doctor-theo")!
+    const doctor = state.users.find((item) => item.id === "doctor-anika")!
     const permitted = authorisedWorkspaceState(state, doctor)
-    expect(permitted.conversations.map((item) => item.id)).toEqual(["conversation-theo-harley"])
-    expect(permitted.messages.every((item) => item.conversationId === "conversation-theo-harley")).toBe(true)
+    expect(permitted.conversations.map((item) => item.id)).toEqual(["conversation-anika-harley"])
+    expect(permitted.messages.every((item) => item.conversationId === "conversation-anika-harley")).toBe(true)
     expect(permitted.notifications.every((item) => item.recipientId === doctor.id)).toBe(true)
   })
 

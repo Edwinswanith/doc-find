@@ -8,7 +8,7 @@ import { WorkspaceDomainError } from "@/lib/workspace/domain"
 const schema = z.object({ step: z.number().int().min(1).max(8), fields: z.record(z.string(), z.string().max(500)) })
 
 export async function PUT(request: Request, context: { params: Promise<{ audience: string }> }) {
-  const actor = verifyPrototypeCookie((await cookies()).get(COOKIE_NAME)?.value)
+  const actor = await verifyPrototypeCookie((await cookies()).get(COOKIE_NAME)?.value)
   if (!actor) return NextResponse.json({ success: false, error: { code: "UNAUTHENTICATED", message: "Choose a demo identity." } }, { status: 401 })
   const audience = (await context.params).audience
   if (audience !== "doctor" && audience !== "clinic") return NextResponse.json({ success: false, error: { code: "NOT_FOUND", message: "Onboarding route not found." } }, { status: 404 })

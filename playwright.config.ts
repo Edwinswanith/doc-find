@@ -4,7 +4,7 @@ export default defineConfig({
   testDir: "./e2e",
   workers: 1,
   use: { baseURL: "http://127.0.0.1:3000", trace: "retain-on-failure" },
-  webServer: { command: "pnpm dev", url: "http://127.0.0.1:3000", reuseExistingServer: true },
+  webServer: { command: "pnpm dev", url: "http://127.0.0.1:3000", reuseExistingServer: true, env: { DEMO_MODE: "true" } },
   projects: [
     { name: "mobile-chrome", use: { ...devices["Pixel 7"] } },
     { name: "desktop-chrome", use: { ...devices["Desktop Chrome"] } },

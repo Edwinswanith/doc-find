@@ -72,6 +72,45 @@ export function requirementCoverage(state: WorkspaceState, requirementId: string
   return { booked, total: occurrences.length, label: `${booked} of ${occurrences.length} sessions booked` }
 }
 
+export type CalendarItemStatus = "open" | "applications" | "invited" | "confirmed" | "action_required" | "completed"
+
+export type OccurrenceStaffing = {
+  status: CalendarItemStatus
+  unfilled: number
+  invitesPending: number
+  applicationsPending: number
+  offersPending: number
+  confirmedDoctorIds: string[]
+}
+
+// Urgency is judged from the session's own start time, not from when the calling code happens to
+// run -- passing `now` explicitly (rather than reading Date.now() inside) keeps this pure and lets
+// tests pin a reference instant instead of racing the wall clock.
+export function classifyOccurrenceStaffing(state: WorkspaceState, occurrenceId: string, now: Date = new Date()): OccurrenceStaffing {
+  const occurrence = state.occurrences.find((item) => item.id === occurrenceId)
+  if (!occurrence) throw new WorkspaceDomainError("Session occurrence not found.", "NOT_FOUND")
+  const engagements = state.engagements.filter((item) => item.requirementId === occurrence.requirementId && item.selectedOccurrenceIds.includes(occurrenceId))
+  const invitesPending = engagements.filter((item) => item.origins.includes("invitation") && item.stage === "invited").length
+  const applicationsPending = engagements.filter((item) => item.stage === "applied").length
+  const offersPending = state.offers.filter((item) => item.occurrenceIds.includes(occurrenceId) && item.status === "sent").length
+  const confirmedDoctorIds = state.bookings.filter((item) => item.occurrenceIds.includes(occurrenceId)).map((item) => item.doctorId)
+  const unfilled = Math.max(0, occurrence.capacity - occurrence.reserved)
+  const hoursUntilStart = (new Date(occurrence.startsAt).getTime() - now.getTime()) / 3600000
+  const shiftEnded = new Date(occurrence.endsAt).getTime() <= now.getTime()
+
+  let status: CalendarItemStatus
+  if (occurrence.state === "discrepancy") status = "action_required"
+  else if (occurrence.state === "completed") status = "completed"
+  else if (occurrence.state === "booked" && shiftEnded) status = "action_required"
+  else if (unfilled <= 0) status = "confirmed"
+  else if (hoursUntilStart <= 48) status = "action_required"
+  else if (applicationsPending > 0) status = "applications"
+  else if (invitesPending > 0) status = "invited"
+  else status = "open"
+
+  return { status, unfilled, invitesPending, applicationsPending, offersPending, confirmedDoctorIds }
+}
+
 export function calculateOccurrenceReadiness(state: WorkspaceState, doctorId: string, occurrenceId: string): ReadinessResult {
   const occurrence = state.occurrences.find((item) => item.id === occurrenceId)
   if (!occurrence) throw new WorkspaceDomainError("Session occurrence not found.", "NOT_FOUND")
@@ -125,6 +164,14 @@ export function acceptOfferCommand(state: WorkspaceState, input: { actorId: stri
   const now = input.now.toISOString()
   const nextOffer = { ...offer, status: "accepted" as const, acceptedAt: now }
   const nextEngagement = { ...engagement, stage: "terms_accepted" as const, nextAction: "Complete readiness checks", version: engagement.version + 1 }
+  const requirement = state.requirements.find((item) => item.id === engagement.requirementId)
+  const existingApproval = requirement && state.approvals.find((item) => item.doctorId === engagement.doctorId && item.siteId === requirement.siteId && item.scope === offer.scope)
+  // A dedicated "approver" persona takes clinical-approval requests when one exists for the
+  // organisation. Nothing in this demo currently seeds one, so without a fallback the request would
+  // simply never be created and readiness could never leave "approval required" for anyone -- the
+  // clinic's own manager (the requirement owner) is the next most sensible owner in that case.
+  const approver = requirement && !existingApproval && (state.users.find((item) => item.role === "approver" && item.organisationId === requirement.organisationId) ?? state.users.find((item) => item.id === requirement.ownerId))
+  const newApproval = approver && requirement ? { id: `approval-${crypto.randomUUID()}`, doctorId: engagement.doctorId, siteId: requirement.siteId, scope: offer.scope, status: "requested" as const, validUntil: new Date(input.now.getTime() + 365 * 86400000).toISOString(), ownerId: approver.id, version: 1 } : undefined
   const nextState: WorkspaceState = {
     ...state,
     version: state.version + 1,
@@ -132,9 +179,14 @@ export function acceptOfferCommand(state: WorkspaceState, input: { actorId: stri
     engagements: state.engagements.map((item) => item.id === engagement.id ? nextEngagement : item),
     occurrences: state.occurrences.map((item) => offer.occurrenceIds.includes(item.id) ? { ...item, reserved: item.reserved + 1, state: "booked" as const, version: item.version + 1 } : item),
     bookings: [...state.bookings, { id: `booking-${offer.id}`, engagementId: engagement.id, offerId: offer.id, doctorId: engagement.doctorId, occurrenceIds: offer.occurrenceIds, agreementState: "terms_accepted", createdAt: now, version: 1 }],
-    auditEvents: [...state.auditEvents, { id: `audit-${crypto.randomUUID()}`, actorId: input.actorId, action: "accept-offer", recordId: offer.id, version: offer.version, at: now, detail: `Accepted offer version ${offer.version}` }],
+    approvals: newApproval ? [...state.approvals, newApproval] : state.approvals,
+    auditEvents: [
+      ...state.auditEvents,
+      { id: `audit-${crypto.randomUUID()}`, actorId: input.actorId, action: "accept-offer", recordId: offer.id, version: offer.version, at: now, detail: `Accepted offer version ${offer.version}` },
+      ...(newApproval ? [{ id: `audit-${crypto.randomUUID()}`, actorId: input.actorId, action: "request-approval", recordId: newApproval.id, version: newApproval.version, at: now, detail: `Clinical approval requested for ${newApproval.scope} at ${requirement?.siteId}` }] : []),
+    ],
   }
-  return { state: nextState, offer: nextOffer, readiness: calculateOccurrenceReadiness(nextState, engagement.doctorId, offer.occurrenceIds[0]) }
+  return { state: nextState, offer: nextOffer, approval: newApproval, readiness: calculateOccurrenceReadiness(nextState, engagement.doctorId, offer.occurrenceIds[0]) }
 }
 
 export function filterWorkspaceDoctors(state: WorkspaceState, filters: DoctorSearchFilters): DoctorSearchResult[] {

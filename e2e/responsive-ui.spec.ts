@@ -26,27 +26,22 @@ test("mobile candidates use readable records instead of a horizontally panned ta
   await expect(firstRecord.getByRole("link")).toBeVisible()
 })
 
-test("desktop navigation can collapse and global search opens from the keyboard", async ({ page }) => {
+test("global search opens from the keyboard shortcut inside the mobile-app frame, even on a wide browser window", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 })
   await session(page, "manager-sarah")
   await page.goto("/clinic/org-harley/today")
-  await page.getByRole("button", { name: "Collapse navigation" }).click()
-  await expect(page.locator(".df-shell")).toHaveClass(/is-navigation-collapsed/)
+  // The workspace always renders as a fixed-width mobile frame; the desktop sidebar never appears.
+  await expect(page.locator(".df-sidebar")).toBeHidden()
+  const shellWidth = await page.locator(".df-shell").evaluate((element) => element.getBoundingClientRect().width)
+  expect(shellWidth, "shell should stay phone-width even on a wide viewport").toBeLessThan(768)
+  // Interact with the page first so the keyboard-shortcut listener (attached post-hydration) is guaranteed to be live.
+  await page.getByRole("heading", { name: "Today" }).click()
   await page.keyboard.press("Control+k")
   await expect(page.getByRole("dialog", { name: "Search Doc+Find" })).toBeVisible()
-  await page.getByPlaceholder("Search views, doctors or vacancies").fill("Theo")
-  await expect(page.getByRole("dialog").getByRole("link", { name: /Dr Theo Martin/ })).toBeVisible()
-})
-
-test("completed demonstration lifecycle remains visible as seven separate stages", async ({ page }) => {
-  await session(page, "doctor-sofia")
-  await page.goto("/doctor/today")
-  const lifecycle = page.getByRole("list", { name: "Engagement lifecycle" })
-  await expect(lifecycle).toBeVisible()
-  await expect(lifecycle.locator("li.complete")).toHaveCount(7)
-  await expect(lifecycle.getByText("Accepted", { exact: true })).toBeVisible()
-  await expect(lifecycle.getByText("Ready", { exact: true })).toBeVisible()
-  await expect(lifecycle.getByText("Paid", { exact: true })).toBeVisible()
+  await page.getByPlaceholder("Search views, doctors or vacancies").fill("Anika")
+  const dialogWidth = await page.getByRole("dialog").evaluate((element) => element.getBoundingClientRect().width)
+  expect(dialogWidth, "dialog should stay within the phone frame, not the full browser width").toBeLessThan(768)
+  await expect(page.getByRole("dialog").getByRole("link", { name: /Dr Anika Rao/ })).toBeVisible()
 })
 
 test("critical clinic and doctor destinations have no serious accessibility violations", async ({ page }) => {

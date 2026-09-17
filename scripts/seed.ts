@@ -1,11 +1,14 @@
+import { existsSync } from "node:fs"
 import { MongoClient } from "mongodb"
 import { createWorkspaceFixture } from "../src/lib/workspace/fixture"
+
+if (existsSync(".env.local")) process.loadEnvFile(".env.local")
 
 const uri = process.env.MONGODB_URI
 const databaseName = process.env.MONGODB_DB || "doc_find_demo"
 
 async function seed() {
-  if (!uri) throw new Error("MONGODB_URI is required. Keep it in .env.local and never commit it.")
+  if (!uri) throw new Error("MONGODB_URI is required for this script (it seeds a real MongoDB database). Keep it in .env.local and never commit it. Running the app without MongoDB? Use the in-app \"Reset demo data\" button instead (requires DEMO_MODE=true in .env.local) — this script cannot reach that in-memory store from a separate process.")
   if (databaseName !== "doc_find_demo") throw new Error("Refusing to seed any database except doc_find_demo.")
   const client = new MongoClient(uri)
   await client.connect()

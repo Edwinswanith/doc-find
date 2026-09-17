@@ -1,12 +1,12 @@
 import type { WorkspaceState, WorkspaceUser } from "./types"
 
-export function canOpenWorkspaceView(actor: WorkspaceUser, view: string, organisationId?: string) {
+export function canOpenWorkspaceView(actor: WorkspaceUser, view: string, organisationId?: string, audience?: string) {
   if (view.startsWith("clinic-")) return actor.role === "manager" && actor.organisationId === organisationId
   if (view.startsWith("doctor-") || view === "inbox") return actor.role === "doctor"
   if (view === "approver") return actor.role === "approver"
   if (view === "finance") return actor.role === "finance"
   if (view === "operations") return actor.role === "operations"
-  if (view === "onboarding") return true
+  if (view === "onboarding") return audience === "doctor" ? actor.role === "doctor" : audience === "clinic" ? actor.role === "manager" : false
   return view === "engagement" || view === "offer"
 }
 
